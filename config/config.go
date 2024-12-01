@@ -1,7 +1,27 @@
 package config
 
-var JwtSecret = []byte("secret")
+import (
+	"fmt"
+	"os"
+)
 
-const DSN = "host=localhost user=postgres password=password port=5432 dbname=goauth"
 
 const CompanyEmailAddress = "support@goauth.com"
+
+var JwtSecret = []byte(getEnv("JWT_SECRET", "secret"))
+
+var DSN = fmt.Sprintf(
+	"host=%s user=%s password=%s port=%s dbname=%s",
+	getEnv("DB_HOST", "localhost"),
+	getEnv("DB_USER", "postgres"),
+	getEnv("DB_PASSWORD", "password"),
+	getEnv("DB_PORT", "5432"),
+	getEnv("DB_NAME", "goauth"),
+)
+
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
+}

@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  app:
+    image: golang:1.23.3-alpine
+    container_name: goauth
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=go_auth_db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=goauth
+      - JWT_SECRET=secret
+    depends_on:
+      - go_auth_db
+    command: ["go", "run", "main.go"]
+
+  go_auth_db:
+    image: postgres:15
+    container_name: go_auth_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: goauth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
