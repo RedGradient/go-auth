@@ -18,6 +18,7 @@ import (
 type RefreshRequest struct {
     RefreshToken string `json:"refresh_token"`
 }
+
 var (
 	ErrInvalidGUID       = errors.New("invalid GUID length")
 	ErrTokenGeneration   = errors.New("failed to generate token pair")
@@ -65,14 +66,7 @@ func (tc *TokenController) RefreshHandler(c *fiber.Ctx) error {
     claims := token.Claims.(jwt.MapClaims)
 
     // Check if Refresh token received from unknown IP
-    if c.IP() != claims["ip"].(string) {
-        addr := "username@example.com"
-        message := "Access from unknown IP: " + c.IP()
-        err = tc.EmailSender.Send(addr, "Security alert", message)
-        if err != nil {
-            log.Printf("Security alert cannot be sent to %s", addr)
-        }
-    }
+    tc.handleUnknownIP(c, claims)
 
     // Generate new Access & Refresh tokens
     guid := claims["guid"].(string)
@@ -107,6 +101,21 @@ func (tc *TokenController) RefreshHandler(c *fiber.Ctx) error {
     }
 
     return c.Status(fiber.StatusOK).JSON(tokens)
+}
+
+
+// Checks if the incoming request originates from an IP address different from the
+// one in the refresh token claims. If the IP is different, it sends a security alert
+// email to the user email address
+func (tc *TokenController) handleUnknownIP(c *fiber.Ctx, claims jwt.MapClaims) {
+    if c.IP() != claims["ip"].(string) {
+        addr := "username@example.com"
+        message := "Access from unknown IP: " + c.IP()
+        err := tc.EmailSender.Send(addr, "Security alert", message)
+        if err != nil {
+            log.Printf("Security alert cannot be sent to %s", addr)
+        }
+    }
 }
 
 func (tc *TokenController) validateRefreshToken(c *fiber.Ctx, tokenToValidate string) (*jwt.Token, error) {
