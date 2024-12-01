@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/google/uuid"
-	"go-auth/model"
+	"go-auth/src/model"
 	"gorm.io/gorm"
 	"log"
 )

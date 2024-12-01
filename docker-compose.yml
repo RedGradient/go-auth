@@ -4,7 +4,7 @@ services:
   app:
     image: golang:1.23.3-alpine
     container_name: goauth
-    working_dir: /app
+    working_dir: /app/src
     volumes:
       - .:/app
     ports:

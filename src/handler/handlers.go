@@ -5,10 +5,10 @@ import (
     "fmt"
     "github.com/gofiber/fiber/v2"
     "github.com/golang-jwt/jwt/v5"
-    "go-auth/config"
-    "go-auth/model"
-    "go-auth/email"
-    "go-auth/service"
+    "go-auth/src/config"
+    "go-auth/src/email"
+    "go-auth/src/model"
+    "go-auth/src/service"
     "golang.org/x/crypto/bcrypt"
     "log"
     "time"
@@ -60,10 +60,13 @@ func (tc *TokenController) RefreshHandler(c *fiber.Ctx) error {
     // Validation
     token, err := tc.validateRefreshToken(c, refreshRequest.RefreshToken)
     if err != nil {
-        return err
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err})
     }
 
-    claims := token.Claims.(jwt.MapClaims)
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid or expired refresh token"})
+    }
 
     // Check if Refresh token received from unknown IP
     tc.handleUnknownIP(c, claims)
@@ -125,8 +128,15 @@ func (tc *TokenController) validateRefreshToken(c *fiber.Ctx, tokenToValidate st
         }
         return config.JwtSecret, nil
     })
-    if err != nil || !token.Valid {
-        return token, c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid or expired refresh token"})
+
+    if err != nil {
+        log.Println("Token verification failed:", err)
+        return nil, err
+    }
+
+    if !token.Valid {
+        log.Println("Invalid token")
+        return nil, c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid or expired refresh token"})
     }
 
     return token, nil
